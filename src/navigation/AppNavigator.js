@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import { checkAuth } from '../redux/slices/authSlice';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Stack = createStackNavigator();
 
@@ -17,7 +18,7 @@ const AppNavigator = () => {
   }, [dispatch]);
 
   if (loading) {
-    return null; // Optionally render a loading spinner here
+    return <LoadingSpinner />;
   }
 
   return (

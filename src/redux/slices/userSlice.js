@@ -34,7 +34,11 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsersList.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = [...state.users, ...action.payload.data];
+        // Only add users with unique ids
+        const newUsers = action.payload.data.filter(
+          (newUser) => !state.users.some((u) => u.id === newUser.id)
+        );
+        state.users = [...state.users, ...newUsers];
         state.page = action.payload.page + 1;
         state.totalPages = action.payload.total_pages;
       })

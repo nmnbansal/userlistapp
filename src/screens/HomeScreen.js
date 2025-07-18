@@ -1,16 +1,18 @@
 import React, { useEffect } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Button, Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsersList, resetUsers } from '../redux/slices/userSlice';
-import { logout } from '../redux/slices/authSlice';
+import { logoutUser } from '../redux/slices/authSlice';
 import UserCard from '../components/UserCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const HomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { users, page, totalPages, loading, error } = useSelector((state) => state.users);
+  const { users, page, totalPages, loading: usersLoading, error } = useSelector((state) => state.users);
+  const { loading: authLoading } = useSelector((state) => state.auth);
   const [refreshing, setRefreshing] = React.useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     dispatch(fetchUsersList(1));
@@ -23,28 +25,33 @@ const HomeScreen = ({ navigation }) => {
   }, [dispatch]);
 
   const loadMoreUsers = () => {
-    if (page <= totalPages && !loading) {
+    if (page <= totalPages && !usersLoading) {
       dispatch(fetchUsersList(page));
     }
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigation.navigate('Login');
+    dispatch(logoutUser())
+      .unwrap()
+      .then(() => {
+        dispatch(resetUsers());
+        navigation.navigate('Login');
+      });
   };
 
-  if (loading && users.length === 0) return <LoadingSpinner />;
+  if (authLoading) return <LoadingSpinner />;
+  if (usersLoading && users.length === 0) return <LoadingSpinner />;
 
   return (
-    <View style={styles.container}>
-      <Text variant="titleLarge" style={styles.title}>Users</Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+      <Text style={[styles.title, { color: theme.dark ? '#fff' : theme.colors.text }]}>Users</Text>
       <FlatList
         data={users}
         renderItem={({ item }) => <UserCard user={item} />}
         keyExtractor={(item) => item.id.toString()}
         onEndReached={loadMoreUsers}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loading && users.length > 0 ? <LoadingSpinner /> : null}
+        ListFooterComponent={usersLoading && users.length > 0 ? <LoadingSpinner /> : null}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
       {error && <Text style={styles.error}>{error}</Text>}

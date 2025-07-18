@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, Alert } from 'react-native';
+import { TextInput, Button, Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../redux/slices/authSlice';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,22 +10,25 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('cityslicka');
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
-
-  const handleLogin = async () => {
-    try {
-      await dispatch(loginUser({ email, password })).unwrap();
-      navigation.navigate('Home');
-    } catch (err) {
-      console.error('Login Error:', err);
-      // Error is already set in Redux state, no need for Alert
-    }
+  const theme = useTheme();
+  
+  const handleLogin = () => {
+    dispatch(loginUser({ email, password }))
+      .unwrap()
+      .then(() => navigation.navigate('Home'))
+      .catch((err) => Alert.alert('Login Failed', err));
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <View style={styles.container}>
-      <Text variant="titleLarge" style={styles.title}>Login</Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+      <Text 
+        variant="titleLarge" 
+        style={[styles.title, { color: theme.dark ? '#fff' : theme.colors.text }]}
+      >
+        Login
+      </Text>
       <TextInput
         label="Email"
         value={email}
@@ -33,7 +36,6 @@ const LoginScreen = ({ navigation }) => {
         style={styles.input}
         mode="outlined"
         autoCapitalize="none"
-        keyboardType="email-address"
       />
       <TextInput
         label="Password"
@@ -43,10 +45,15 @@ const LoginScreen = ({ navigation }) => {
         mode="outlined"
         secureTextEntry
       />
-      <Button mode="contained" onPress={handleLogin} style={styles.button} disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
+      <Button 
+        mode="contained" 
+        onPress={handleLogin} 
+        style={styles.button}
+        labelStyle={{ color: theme.dark ? '#fff' : undefined }}
+      >
+        Login
       </Button>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: theme.colors.error, textAlign: 'center' }]}>{error}</Text>}
     </View>
   );
 };
@@ -68,8 +75,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   error: {
-    color: 'red',
-    textAlign: 'center',
     marginTop: 16,
   },
 });
